@@ -23,6 +23,8 @@ def fetch_reflections():
             "page_size": 10
         }
     ).get("results")
+    
+    st.write("✅ Raw Notion response:", results)
 
     reflections = []
     for page in results:
