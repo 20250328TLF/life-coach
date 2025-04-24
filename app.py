@@ -24,7 +24,7 @@ def fetch_reflections():
         }
     ).get("results")
     
-    st.write("✅ Raw Notion response:", results)
+    #st.write("✅ Raw Notion response:", results)
 
     reflections = []
     for page in results:
