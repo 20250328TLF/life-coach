@@ -19,10 +19,13 @@ def fetch_reflections():
     def get_theme_names(relation_list):
         names = []
         for rel in relation_list:
-            theme_page = notion.pages.retrieve(rel["id"])
-            title_prop = theme_page["properties"].get("Name", {})
-            if "title" in title_prop and title_prop["title"]:
-                names.append(title_prop["title"][0]["plain_text"])
+            try:
+                theme_page = notion.pages.retrieve(rel["id"])
+                name_prop = theme_page["properties"].get("Name", {})
+                if "title" in name_prop and name_prop["title"]:
+                    names.append(name_prop["title"][0]["plain_text"])
+            except Exception as e:
+                st.warning(f"⚠️ Failed to fetch theme: {e}")
         return ", ".join(names)
     
     results = notion.databases.query(
