@@ -75,7 +75,7 @@ def fetch_reflections():
             "summary": get_text("Summary"),
             "insights": get_text("Insights"),
             "mood": get_select("Mood"),
-            "topics": get_theme_names(props["Journal Themes"]["relation"]) if props.get("Journal Themes") else "",
+            "topics": get_theme_names(props["Theme"]["relation"]) if props.get("Theme") else "",
             "intensity": get_number("Intensity"),
         })
 
