@@ -16,6 +16,15 @@ st.subheader("Recent Reflections")
 
 # Fetch pages from the Notion Reflections Journal
 def fetch_reflections():
+    def get_theme_names(relation_list):
+        names = []
+        for rel in relation_list:
+            theme_page = notion.pages.retrieve(rel["id"])
+            title_prop = theme_page["properties"].get("Name", {})
+            if "title" in title_prop and title_prop["title"]:
+                names.append(title_prop["title"][0]["plain_text"])
+        return ", ".join(names)
+    
     results = notion.databases.query(
         **{
             "database_id": REFLECTION_DB_ID,
@@ -66,9 +75,7 @@ def fetch_reflections():
             "summary": get_text("Summary"),
             "insights": get_text("Insights"),
             "mood": get_select("Mood"),
-            "topics": ", ".join([
-    t["name"] for t in props["Journal Themes"]["relation"]
-]) if props.get("Journal Themes") else "",
+            "topics": get_theme_names(props["Journal Themes"]["relation"]) if props.get("Journal Themes") else "",
             "intensity": get_number("Intensity"),
         })
 
