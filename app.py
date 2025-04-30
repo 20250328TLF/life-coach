@@ -41,7 +41,10 @@ def fetch_reflections():
     reflections = []
     for page in results:
         props = page["properties"]
-
+        
+        st.write("🧾 Reflection title:", props["Session Title"]["title"][0]["plain_text"] if props["Session Title"]["title"] else "Untitled")
+        st.write("🧩 Theme field raw data:", props.get("Theme"))
+        
         def get_text(field):
             return (
                 props[field]["rich_text"][0]["plain_text"]
