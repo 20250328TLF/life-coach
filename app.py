@@ -44,6 +44,7 @@ def fetch_reflections():
         
         st.write("🧾 Reflection title:", props["Session Title"]["title"][0]["plain_text"] if props["Session Title"]["title"] else "Untitled")
         st.write("🧩 Theme field raw data:", props.get("Theme"))
+        st.write("📦 Full Notion page object:", page)
         
         def get_text(field):
             return (
