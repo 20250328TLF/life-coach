@@ -63,6 +63,10 @@ def fetch_reflections():
                 else None
             )
 
+        if props.get("Theme"):
+                st.write("🧩 Raw Theme relation list:", props["Theme"])
+
+        
         def get_multi_select(field):
             return ", ".join([tag["name"] for tag in props[field]["multi_select"]]) if props.get(field) else ""
 
@@ -81,7 +85,7 @@ def fetch_reflections():
             "topics": get_theme_names(props["Theme"]["relation"]) if props.get("Theme") else "",
             "intensity": get_number("Intensity"),
         })
-        st.write("🧩 Raw Theme relation list:", props["Theme"])
+        
 
     return reflections
 
