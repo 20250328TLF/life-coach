@@ -11,8 +11,8 @@ st.title("📝 Add a Reflection from Structured Text")
 NOTION_TOKEN = os.getenv("NOTION_TOKEN")
 REFLECTION_DB_ID = os.getenv("NOTION_REFLECTION_DB_ID")
 THEME_DB_ID = os.getenv("NOTION_THEME_DB_ID")
-ACTION_ITEMS_DB_ID = os.getenv("NOTION_ACTION_ITEMS_DB_ID")  # Add this secret in Streamlit
-READINGS_DB_ID = os.getenv("NOTION_READINGS_DB_ID")  # Add this secret in Streamlit
+ACTION_ITEMS_DB_ID = os.getenv("NOTION_TASK_DB_ID")  # Add this secret in Streamlit
+READINGS_DB_ID = os.getenv("NOTION_READING_DB_ID")  # Add this secret in Streamlit
 
 # Initialize Notion client
 notion = Client(auth=NOTION_TOKEN)
