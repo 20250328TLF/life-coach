@@ -3,6 +3,7 @@ import os
 import re
 from notion_client import Client
 from datetime import datetime, timedelta
+import json
 
 st.set_page_config(page_title="Add Reflection")
 st.title("📝 Add a Reflection from Structured Text")
@@ -31,44 +32,47 @@ with st.form("reflection_form"):
 
 # Step 3: Parse fields from the input
 if submitted and raw_input:
-    def extract_field(label, text, multiline=False):
-        # For multiline fields, match up to the next label (e.g., "^[A-Z][A-Za-z ]+:") or end of input
-        pattern = (
-            rf"{label}:\s*((?:(?!^[A-Z][A-Za-z ]+:).)*?)\n(?=^[A-Z][A-Za-z ]+:|\Z)"
-            if multiline
-            else rf"{label}:\s*(.*)"
-        )
-        match = re.search(pattern, text, re.DOTALL | re.MULTILINE)
-        return match.group(1).strip() if match else ""
+    try:
+        reflection = json.loads(raw_input)
+    except json.JSONDecodeError as e:
+        st.error(f"Invalid JSON: {e}")
+        st.stop()
 
-    title = extract_field("Session Title", raw_input)
-    date = extract_field("Session Date", raw_input) or datetime.today().strftime('%Y-%m-%d')
-    mood = extract_field("Mood", raw_input)
-    intensity = extract_field("Intensity", raw_input)
-    summary = extract_field("Summary", raw_input, multiline=True)
-    insights = extract_field("Insights", raw_input, multiline=True)
-    theme_text = extract_field("Theme", raw_input)
-    action_items_text = extract_field("Journal Action Items", raw_input, multiline=True)
-    readings_text = extract_field("Journal Readings", raw_input, multiline=True)
+    title = reflection.get("Session Title", "Untitled")
+    date = reflection.get("Session Date", datetime.today().strftime('%Y-%m-%d'))
+    mood = reflection.get("Mood", "")
+    intensity = reflection.get("Intensity", None)
+    summary = reflection.get("Summary", "")
+    insights = reflection.get("Insights", [])
+    parsed_themes = reflection.get("Theme", [])
+    action_items = reflection.get("Journal Action Items", [])
+    recommended_readings = reflection.get("Journal Readings", [])
 
-    parsed_themes = [t.strip() for t in re.split(",|\n|;", theme_text) if t.strip()]
+    # Ensure insights, action_items, recommended_readings are lists if they are strings
+    if isinstance(insights, str):
+        insights = [insights]
+    if isinstance(action_items, str):
+        action_items = [action_items]
+    if isinstance(recommended_readings, str):
+        recommended_readings = [recommended_readings]
+
+    # Ensure parsed_themes is a list if it's a string
+    if isinstance(parsed_themes, str):
+        parsed_themes = [t.strip() for t in re.split(",|\n|;", parsed_themes) if t.strip()]
+
     known_themes = [t for t in parsed_themes if t in existing_themes]
     new_themes = [t for t in parsed_themes if t not in existing_themes]
-
-    # Parse action items into list
-    action_items = [item.strip("-* \n") for item in re.split("\n|- ", action_items_text) if item.strip()] if action_items_text else []
-    # Parse recommended readings into list
-    recommended_readings = [item.strip("-* \n") for item in re.split("\n|- ", readings_text) if item.strip()] if readings_text else []
 
     st.subheader("🧠 Parsed Reflection")
     st.markdown(f"**Title:** {title}")
     st.markdown(f"**Date:** {date}")
     st.markdown(f"**Mood:** {mood}")
-    st.markdown(f"**Intensity:** {intensity}")
+    st.markdown(f"**Intensity:** {intensity if intensity is not None else ''}")
     st.markdown("**Summary:**")
     st.markdown(summary)
     st.markdown("**Insights:**")
-    st.markdown(insights)
+    for insight in insights:
+        st.markdown(insight)
 
     if action_items:
         st.markdown("**Journal Action Items:**")
@@ -92,9 +96,9 @@ if submitted and raw_input:
             "Session Title": {"title": [{"text": {"content": title}}]},
             "Session Date": {"date": {"start": date}},
             "Mood": {"select": {"name": mood}} if mood else None,
-            "Intensity": {"number": int(intensity) if intensity.isdigit() else None} if intensity else None,
+            "Intensity": {"number": int(intensity) if intensity is not None and str(intensity).isdigit() else None} if intensity else None,
             "Summary": {"rich_text": [{"text": {"content": summary}}]} if summary else None,
-            "Insights": {"rich_text": [{"text": {"content": insights}}]} if insights else None,
+            "Insights": {"rich_text": [{"text": {"content": "\n".join(insights)}}]} if insights else None,
         }
 
         # Remove None values from properties
