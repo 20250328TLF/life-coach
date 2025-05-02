@@ -2,7 +2,7 @@ import streamlit as st
 import os
 import re
 from notion_client import Client
-from datetime import datetime
+from datetime import datetime, timedelta
 
 st.set_page_config(page_title="Add Reflection")
 st.title("📝 Add a Reflection from Structured Text")
@@ -119,9 +119,11 @@ if submitted and raw_input:
 
         # Step 6: Create Action Items and link to Reflection and Themes
         for action_item in action_items:
+            due_date = (datetime.today() + timedelta(days=7)).strftime('%Y-%m-%d')
             ai_properties = {
                 "Name": {"title": [{"text": {"content": action_item}}]},
                 "Reflection": {"relation": [{"id": reflection_id}]},
+                "Due Date": {"date": {"start": due_date}},
             }
             if theme_ids:
                 ai_properties["Journal Themes"] = {"relation": theme_ids}
