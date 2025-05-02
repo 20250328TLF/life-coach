@@ -10,7 +10,7 @@ st.title("📝 Add a Reflection from Structured Text")
 # Load secrets
 NOTION_TOKEN = os.getenv("NOTION_TOKEN")
 REFLECTION_DB_ID = os.getenv("NOTION_REFLECTION_DB_ID")
-THEMES_DB_ID = os.getenv("NOTION_THEME_DB_ID")  # <-- You will need to add this secret in Streamlit
+THEME_DB_ID = os.getenv("NOTION_THEME_DB_ID")
 ACTION_ITEMS_DB_ID = os.getenv("NOTION_ACTION_ITEMS_DB_ID")  # Add this secret in Streamlit
 READINGS_DB_ID = os.getenv("NOTION_READINGS_DB_ID")  # Add this secret in Streamlit
 
@@ -19,7 +19,7 @@ notion = Client(auth=NOTION_TOKEN)
 
 # Step 1: Get list of existing Journal Themes
 def get_existing_themes():
-    response = notion.databases.query(database_id=THEMES_DB_ID)
+    response = notion.databases.query(database_id=THEME_DB_ID)
     return [r['properties']['Name']['title'][0]['plain_text'] for r in response['results'] if r['properties']['Name']['title']]
 
 existing_themes = get_existing_themes()
@@ -94,7 +94,7 @@ if submitted and raw_input:
         for theme_name in selected_themes + new_themes:
             # Search for theme page
             results = notion.databases.query(
-                database_id=THEMES_DB_ID,
+                database_id=THEME_DB_ID,
                 filter={"property": "Name", "rich_text": {"equals": theme_name}}
             )
             if results['results']:
@@ -102,7 +102,7 @@ if submitted and raw_input:
             else:
                 # Create the new theme in Journal Themes DB
                 new_theme = notion.pages.create(
-                    parent={"database_id": THEMES_DB_ID},
+                    parent={"database_id": THEME_DB_ID},
                     properties={"Name": {"title": [{"text": {"content": theme_name}}]}}
                 )
                 theme_ids.append({"id": new_theme['id']})
