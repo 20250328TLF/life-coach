@@ -11,6 +11,8 @@ st.title("📝 Add a Reflection from Structured Text")
 NOTION_TOKEN = os.getenv("NOTION_TOKEN")
 REFLECTION_DB_ID = os.getenv("NOTION_REFLECTION_DB_ID")
 THEMES_DB_ID = os.getenv("NOTION_THEME_DB_ID")  # <-- You will need to add this secret in Streamlit
+ACTION_ITEMS_DB_ID = os.getenv("NOTION_ACTION_ITEMS_DB_ID")  # Add this secret in Streamlit
+READINGS_DB_ID = os.getenv("NOTION_READINGS_DB_ID")  # Add this secret in Streamlit
 
 # Initialize Notion client
 notion = Client(auth=NOTION_TOKEN)
@@ -24,7 +26,7 @@ existing_themes = get_existing_themes()
 
 # Step 2: Paste structured reflection
 with st.form("reflection_form"):
-    raw_input = st.text_area("Paste your structured reflection (from ChatGPT or your prompt):", height=300)
+    raw_input = st.text_area("Paste your structured reflection (from ChatGPT or your prompt):", height=400)
     submitted = st.form_submit_button("Parse Reflection")
 
 # Step 3: Parse fields from the input
@@ -41,10 +43,17 @@ if submitted and raw_input:
     summary = extract_field("Summary", raw_input, multiline=True)
     insights = extract_field("Insights", raw_input, multiline=True)
     theme_text = extract_field("Topic/Theme", raw_input)
+    action_items_text = extract_field("Suggested Action Items", raw_input, multiline=True)
+    readings_text = extract_field("Recommended Readings", raw_input, multiline=True)
 
     parsed_themes = [t.strip() for t in re.split(",|\n|;", theme_text) if t.strip()]
     known_themes = [t for t in parsed_themes if t in existing_themes]
     new_themes = [t for t in parsed_themes if t not in existing_themes]
+
+    # Parse action items into list
+    action_items = [item.strip("-* \n") for item in re.split("\n|- ", action_items_text) if item.strip()] if action_items_text else []
+    # Parse recommended readings into list
+    recommended_readings = [item.strip("-* \n") for item in re.split("\n|- ", readings_text) if item.strip()] if readings_text else []
 
     st.subheader("🧠 Parsed Reflection")
     st.markdown(f"**Title:** {title}")
@@ -53,6 +62,12 @@ if submitted and raw_input:
     st.markdown(f"**Intensity:** {intensity}")
     st.markdown(f"**Summary:** {summary}")
     st.markdown(f"**Insights:**\n{insights}")
+    st.markdown(f"**Suggested Action Items:**")
+    for ai in action_items:
+        st.markdown(f"- {ai}")
+    st.markdown(f"**Recommended Readings:**")
+    for rd in recommended_readings:
+        st.markdown(f"- {rd}")
 
     selected_themes = st.multiselect(
         "Select Journal Themes:", options=existing_themes, default=known_themes)
@@ -65,11 +80,14 @@ if submitted and raw_input:
         properties = {
             "Session Title": {"title": [{"text": {"content": title}}]},
             "Session Date": {"date": {"start": date}},
-            "Mood": {"select": {"name": mood}},
-            "Intensity": {"number": int(intensity) if intensity.isdigit() else None},
-            "Summary": {"rich_text": [{"text": {"content": summary}}]},
-            "Insights": {"rich_text": [{"text": {"content": insights}}]},
+            "Mood": {"select": {"name": mood}} if mood else None,
+            "Intensity": {"number": int(intensity) if intensity.isdigit() else None} if intensity else None,
+            "Summary": {"rich_text": [{"text": {"content": summary}}]} if summary else None,
+            "Insights": {"rich_text": [{"text": {"content": insights}}]} if insights else None,
         }
+
+        # Remove None values from properties
+        properties = {k: v for k, v in properties.items() if v is not None}
 
         # Step 5: Link to existing themes + optionally create new ones
         theme_ids = []
@@ -89,12 +107,40 @@ if submitted and raw_input:
                 )
                 theme_ids.append({"id": new_theme['id']})
 
-        properties["Journal Themes"] = {"relation": theme_ids}
+        if theme_ids:
+            properties["Journal Themes"] = {"relation": theme_ids}
 
         # Create the page in Reflections Journal
-        notion.pages.create(
+        reflection_page = notion.pages.create(
             parent={"database_id": REFLECTION_DB_ID},
             properties=properties
         )
+        reflection_id = reflection_page['id']
 
-        st.success("Reflection successfully saved to Notion!")
+        # Step 6: Create Action Items and link to Reflection and Themes
+        for action_item in action_items:
+            ai_properties = {
+                "Name": {"title": [{"text": {"content": action_item}}]},
+                "Reflection": {"relation": [{"id": reflection_id}]},
+            }
+            if theme_ids:
+                ai_properties["Journal Themes"] = {"relation": theme_ids}
+            notion.pages.create(
+                parent={"database_id": ACTION_ITEMS_DB_ID},
+                properties=ai_properties
+            )
+
+        # Step 7: Create Recommended Readings and link to Reflection and Themes
+        for reading in recommended_readings:
+            rd_properties = {
+                "Name": {"title": [{"text": {"content": reading}}]},
+                "Reflection": {"relation": [{"id": reflection_id}]},
+            }
+            if theme_ids:
+                rd_properties["Journal Themes"] = {"relation": theme_ids}
+            notion.pages.create(
+                parent={"database_id": READINGS_DB_ID},
+                properties=rd_properties
+            )
+
+        st.success("Reflection, Action Items, and Recommended Readings successfully saved to Notion!")
