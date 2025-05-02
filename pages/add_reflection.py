@@ -32,8 +32,13 @@ with st.form("reflection_form"):
 # Step 3: Parse fields from the input
 if submitted and raw_input:
     def extract_field(label, text, multiline=False):
-        pattern = rf"{label}:\s*(.*?)(?:\n\n|$)" if multiline else rf"{label}:\s*(.*)"
-        match = re.search(pattern, text, re.DOTALL)
+        # For multiline fields, match up to the next label (e.g., "^[A-Z][A-Za-z ]+:") or end of input
+        pattern = (
+            rf"{label}:\s*((?:(?!^[A-Z][A-Za-z ]+:).)*?)\n(?=^[A-Z][A-Za-z ]+:|\Z)"
+            if multiline
+            else rf"{label}:\s*(.*)"
+        )
+        match = re.search(pattern, text, re.DOTALL | re.MULTILINE)
         return match.group(1).strip() if match else ""
 
     title = extract_field("Session Title", raw_input)
