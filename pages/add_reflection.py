@@ -91,73 +91,76 @@ if submitted and raw_input:
         st.warning(f"The following themes were not recognized and will be created if submitted: {', '.join(new_themes)}")
 
     if st.button("✅ Submit to Notion"):
-        # Step 4: Prepare properties for Notion page
-        properties = {
-            "Session Title": {"title": [{"text": {"content": title}}]},
-            "Session Date": {"date": {"start": date}},
-            "Mood": {"select": {"name": mood}} if mood else None,
-            "Intensity": {"number": int(intensity) if intensity is not None and str(intensity).isdigit() else None} if intensity else None,
-            "Summary": {"rich_text": [{"text": {"content": summary}}]} if summary else None,
-            "Insights": {"rich_text": [{"text": {"content": "\n".join(insights)}}]} if insights else None,
-        }
+        try:
+            # Step 4: Prepare properties for Notion page
+            properties = {
+                "Session Title": {"title": [{"text": {"content": title}}]},
+                "Session Date": {"date": {"start": date}},
+                "Mood": {"select": {"name": mood}} if mood else None,
+                "Intensity": {"number": int(intensity) if intensity is not None and str(intensity).isdigit() else None} if intensity else None,
+                "Summary": {"rich_text": [{"text": {"content": summary}}]} if summary else None,
+                "Insights": {"rich_text": [{"text": {"content": "\n".join(insights)}}]} if insights else None,
+            }
 
-        # Remove None values from properties
-        properties = {k: v for k, v in properties.items() if v is not None}
+            # Remove None values from properties
+            properties = {k: v for k, v in properties.items() if v is not None}
 
-        # Step 5: Link to existing themes + optionally create new ones
-        theme_ids = []
-        for theme_name in selected_themes + new_themes:
-            # Search for theme page
-            results = notion.databases.query(
-                database_id=THEME_DB_ID,
-                filter={"property": "Name", "rich_text": {"equals": theme_name}}
-            )
-            if results['results']:
-                theme_ids.append({"id": results['results'][0]['id']})
-            else:
-                # Create the new theme in Journal Themes DB
-                new_theme = notion.pages.create(
-                    parent={"database_id": THEME_DB_ID},
-                    properties={"Name": {"title": [{"text": {"content": theme_name}}]}}
+            # Step 5: Link to existing themes + optionally create new ones
+            theme_ids = []
+            for theme_name in selected_themes + new_themes:
+                # Search for theme page
+                results = notion.databases.query(
+                    database_id=THEME_DB_ID,
+                    filter={"property": "Name", "rich_text": {"equals": theme_name}}
                 )
-                theme_ids.append({"id": new_theme['id']})
+                if results['results']:
+                    theme_ids.append({"id": results['results'][0]['id']})
+                else:
+                    # Create the new theme in Journal Themes DB
+                    new_theme = notion.pages.create(
+                        parent={"database_id": THEME_DB_ID},
+                        properties={"Name": {"title": [{"text": {"content": theme_name}}]}}
+                    )
+                    theme_ids.append({"id": new_theme['id']})
 
-        if theme_ids:
-            properties["Journal Themes"] = {"relation": theme_ids}
-
-        # Create the page in Reflections Journal
-        reflection_page = notion.pages.create(
-            parent={"database_id": REFLECTION_DB_ID},
-            properties=properties
-        )
-        reflection_id = reflection_page['id']
-
-        # Step 6: Create Action Items and link to Reflection and Themes
-        for action_item in action_items:
-            due_date = (datetime.today() + timedelta(days=7)).strftime('%Y-%m-%d')
-            ai_properties = {
-                "Name": {"title": [{"text": {"content": action_item}}]},
-                "Reflection": {"relation": [{"id": reflection_id}]},
-                "Due Date": {"date": {"start": due_date}},
-            }
             if theme_ids:
-                ai_properties["Journal Themes"] = {"relation": theme_ids}
-            notion.pages.create(
-                parent={"database_id": ACTION_ITEMS_DB_ID},
-                properties=ai_properties
-            )
+                properties["Journal Themes"] = {"relation": theme_ids}
 
-        # Step 7: Create Recommended Readings and link to Reflection and Themes
-        for reading in recommended_readings:
-            rd_properties = {
-                "Name": {"title": [{"text": {"content": reading}}]},
-                "Reflection": {"relation": [{"id": reflection_id}]},
-            }
-            if theme_ids:
-                rd_properties["Journal Themes"] = {"relation": theme_ids}
-            notion.pages.create(
-                parent={"database_id": READINGS_DB_ID},
-                properties=rd_properties
+            # Create the page in Reflections Journal
+            reflection_page = notion.pages.create(
+                parent={"database_id": REFLECTION_DB_ID},
+                properties=properties
             )
+            reflection_id = reflection_page['id']
 
-        st.success("Reflection, Action Items, and Recommended Readings successfully saved to Notion!")
+            # Step 6: Create Action Items and link to Reflection and Themes
+            for action_item in action_items:
+                due_date = (datetime.today() + timedelta(days=7)).strftime('%Y-%m-%d')
+                ai_properties = {
+                    "Name": {"title": [{"text": {"content": action_item}}]},
+                    "Reflection": {"relation": [{"id": reflection_id}]},
+                    "Due Date": {"date": {"start": due_date}},
+                }
+                if theme_ids:
+                    ai_properties["Journal Themes"] = {"relation": theme_ids}
+                notion.pages.create(
+                    parent={"database_id": ACTION_ITEMS_DB_ID},
+                    properties=ai_properties
+                )
+
+            # Step 7: Create Recommended Readings and link to Reflection and Themes
+            for reading in recommended_readings:
+                rd_properties = {
+                    "Name": {"title": [{"text": {"content": reading}}]},
+                    "Reflection": {"relation": [{"id": reflection_id}]},
+                }
+                if theme_ids:
+                    rd_properties["Journal Themes"] = {"relation": theme_ids}
+                notion.pages.create(
+                    parent={"database_id": READINGS_DB_ID},
+                    properties=rd_properties
+                )
+
+            st.success("Reflection, Action Items, and Recommended Readings successfully saved to Notion!")
+        except Exception as e:
+            st.error(f"🚨 Submission failed: {e}")
