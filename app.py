@@ -42,10 +42,6 @@ def fetch_reflections():
     for page in results:
         props = page["properties"]
         
-        st.write("🧾 Reflection title:", props["Session Title"]["title"][0]["plain_text"] if props["Session Title"]["title"] else "Untitled")
-        st.write("🧩 Theme field raw data:", props.get("Theme"))
-        st.write("📦 Full Notion page object:", page)
-        
         def get_text(field):
             return (
                 props[field]["rich_text"][0]["plain_text"]
@@ -67,10 +63,6 @@ def fetch_reflections():
                 else None
             )
 
-        if props.get("Theme"):
-                st.write("🧩 Raw Theme relation list:", props["Theme"])
-
-        
         def get_multi_select(field):
             return ", ".join([tag["name"] for tag in props[field]["multi_select"]]) if props.get(field) else ""
 
