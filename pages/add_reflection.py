@@ -42,9 +42,9 @@ if submitted and raw_input:
     intensity = extract_field("Intensity", raw_input)
     summary = extract_field("Summary", raw_input, multiline=True)
     insights = extract_field("Insights", raw_input, multiline=True)
-    theme_text = extract_field("Topic/Theme", raw_input)
-    action_items_text = extract_field("Suggested Action Items", raw_input, multiline=True)
-    readings_text = extract_field("Recommended Readings", raw_input, multiline=True)
+    theme_text = extract_field("Theme", raw_input)
+    action_items_text = extract_field("Journal Action Items", raw_input, multiline=True)
+    readings_text = extract_field("Journal Readings", raw_input, multiline=True)
 
     parsed_themes = [t.strip() for t in re.split(",|\n|;", theme_text) if t.strip()]
     known_themes = [t for t in parsed_themes if t in existing_themes]
