@@ -65,14 +65,20 @@ if submitted and raw_input:
     st.markdown(f"**Date:** {date}")
     st.markdown(f"**Mood:** {mood}")
     st.markdown(f"**Intensity:** {intensity}")
-    st.markdown(f"**Summary:** {summary}")
-    st.markdown(f"**Insights:**\n{insights}")
-    st.markdown(f"**Suggested Action Items:**")
-    for ai in action_items:
-        st.markdown(f"- {ai}")
-    st.markdown(f"**Recommended Readings:**")
-    for rd in recommended_readings:
-        st.markdown(f"- {rd}")
+    st.markdown("**Summary:**")
+    st.markdown(summary)
+    st.markdown("**Insights:**")
+    st.markdown(insights)
+
+    if action_items:
+        st.markdown("**Journal Action Items:**")
+        for ai in action_items:
+            st.markdown(f"- {ai}")
+
+    if recommended_readings:
+        st.markdown("**Journal Readings:**")
+        for rd in recommended_readings:
+            st.markdown(f"- {rd}")
 
     selected_themes = st.multiselect(
         "Select Journal Themes:", options=existing_themes, default=known_themes)
