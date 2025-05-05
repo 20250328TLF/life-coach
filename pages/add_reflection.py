@@ -129,13 +129,17 @@ if submitted and raw_input:
             if theme_ids:
                 properties["Journal Themes"] = {"relation": theme_ids}
 
-            # Create the page in Reflections Journal
-            reflection_page = notion.pages.create(
-                parent={"database_id": REFLECTION_DB_ID},
-                properties=properties
-            )
-            st.write("Notion API response:")
-            st.write(reflection_page)
+            # Create the page in Reflections Journal with error logging
+            try:
+                reflection_page = notion.pages.create(
+                    parent={"database_id": REFLECTION_DB_ID},
+                    properties=properties
+                )
+                st.write("Notion API response:", reflection_page)  # Log the response for debugging
+            except Exception as e:
+                st.error(f"Error creating page in Notion: {e}")
+                print(f"Error creating page in Notion: {e}")  # Log to the console as well
+                raise  # re-raise to be caught by outer except
 
             reflection_id = reflection_page['id']
 
