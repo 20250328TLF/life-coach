@@ -105,6 +105,9 @@ if submitted and raw_input:
             # Remove None values from properties
             properties = {k: v for k, v in properties.items() if v is not None}
 
+            st.write("Submitting the following properties:")
+            st.write(properties)  # Print properties to debug
+
             # Step 5: Link to existing themes + optionally create new ones
             theme_ids = []
             for theme_name in selected_themes + new_themes:
@@ -131,6 +134,9 @@ if submitted and raw_input:
                 parent={"database_id": REFLECTION_DB_ID},
                 properties=properties
             )
+            st.write("Notion API response:")
+            st.write(reflection_page)
+
             reflection_id = reflection_page['id']
 
             # Step 6: Create Action Items and link to Reflection and Themes
@@ -164,3 +170,4 @@ if submitted and raw_input:
             st.success("Reflection, Action Items, and Recommended Readings successfully saved to Notion!")
         except Exception as e:
             st.error(f"🚨 Submission failed: {e}")
+            print(f"Error occurred: {e}")  # Print error in the console for more info
